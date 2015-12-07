@@ -1,0 +1,45 @@
+<?php
+
+class ImageActionDelete extends WireData implements Module {
+	
+	public static function getModuleInfo() {
+		return array(
+			'title' => __('Image Delete Action in Grid', __FILE__), // Module Title
+			'summary' => __('Adds a delete icon when hovering over an image in an InputfieldImage in grid view.', __FILE__), // Module Summary
+			'version' => '0.1.0',
+			'requires' => array(
+				"InputfieldImage"
+				),
+			);
+	}
+	
+	public function init()
+	{
+		$this->addHookAfter('InputfieldImage::renderItem', $this, 'injectDeleteAction_beforeRenderItem');
+		$this->addHookBefore('InputfieldImage::render', $this, 'loadModuleAssets_beforeRender');
+	}
+	
+	public function loadModuleAssets_beforeRender($event)
+	{
+		$this->wire('modules')->loadModuleFileAssets('ImageActionDelete');
+	}
+	
+	public function injectDeleteAction_beforeRenderItem($event)
+	{
+		$pagefile = $event->arguments[0];
+		$id = $event->arguments[1];
+		$html = $event->return;
+		
+		$pos = strpos($html, "<div class='InputfieldImageActions'>");
+		if($pos === false) return;
+		
+		$posClose = strpos($html, "\n\t\t\t\t</div>", $pos);
+		if($posClose === false) return;
+		
+		$snippet = 	"\n\t\t\t<a href='#' onclick='toggleImageActionDelete(this)' data-iad-file-id='{$id}' class='ImageActionDelete'>" .
+					"<i class='fa fa-fw fa-trash'></i></a>";
+
+		$event->return = substr($html, 0, $posClose) . $snippet . substr($html, $posClose);
+	}
+	
+}
